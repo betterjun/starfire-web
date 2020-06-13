@@ -60,7 +60,7 @@
         </span>
       </el-form-item>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleRegister">Login</el-button>
+      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleRegister">注册</el-button>
 
       <div class="tips">
         <span style="margin-right:20px;" @click="toLogin"> 已有账号，去登陆</span>
@@ -77,7 +77,7 @@ import { validUsername, validPassword } from '@/utils/validate'
 import { SHA1 } from 'crypto-js'
 
 export default {
-  name: 'Login',
+  name: 'Register',
   data() {
     const validateUsername = (rule, value, callback) => {
       if (!validUsername(value)) {
