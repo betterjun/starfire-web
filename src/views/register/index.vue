@@ -1,9 +1,9 @@
 <template>
   <div class="login-container">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
+    <el-form ref="registerForm" :model="registerForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
 
       <div class="title-container">
-        <h3 class="title">用户登陆</h3>
+        <h3 class="title">用户注册</h3>
       </div>
 
       <el-form-item prop="username">
@@ -12,7 +12,7 @@
         </span>
         <el-input
           ref="username"
-          v-model="loginForm.username"
+          v-model="registerForm.username"
           placeholder="Username"
           name="username"
           type="text"
@@ -28,23 +28,42 @@
         <el-input
           :key="passwordType"
           ref="password"
-          v-model="loginForm.password"
+          v-model="registerForm.password"
           :type="passwordType"
           placeholder="Password"
           name="password"
           tabindex="2"
           auto-complete="on"
-          @keyup.enter.native="handleLogin"
         />
         <span class="show-pwd" @click="showPwd">
           <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
         </span>
       </el-form-item>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
+      <el-form-item prop="password">
+        <span class="svg-container">
+          <svg-icon icon-class="password" />
+        </span>
+        <el-input
+          :key="passwordType"
+          ref="passwordConfirm"
+          v-model="registerForm.passwordConfirm"
+          :type="passwordType"
+          placeholder="Password Confirm"
+          name="passwordConfirm"
+          tabindex="3"
+          auto-complete="on"
+          @keyup.enter.native="handleRegister"
+        />
+        <span class="show-pwd" @click="showPwd">
+          <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
+        </span>
+      </el-form-item>
+
+      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleRegister">Login</el-button>
 
       <div class="tips">
-        <span style="margin-right:20px;" @click="toRegister"> 注册</span>
+        <span style="margin-right:20px;" @click="toLogin"> 已有账号，去登陆</span>
       </div>
 
     </el-form>
@@ -52,6 +71,8 @@
 </template>
 
 <script>
+import { Message } from 'element-ui'
+import { register } from '@/api/user'
 import { validUsername, validPassword } from '@/utils/validate'
 import { SHA1 } from 'crypto-js'
 
@@ -73,13 +94,15 @@ export default {
       }
     }
     return {
-      loginForm: {
+      registerForm: {
         username: '',
-        password: ''
+        password: '',
+        passwordConfirm: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
+        password: [{ required: true, trigger: 'blur', validator: validatePassword }],
+        passwordConfirm: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       loading: false,
       passwordType: 'password',
@@ -105,29 +128,40 @@ export default {
         this.$refs.password.focus()
       })
     },
-    handleLogin() {
-      this.$refs.loginForm.validate(valid => {
+    handleRegister() {
+      this.$refs.registerForm.validate(valid => {
         if (valid) {
+          if (this.registerForm.password !== this.registerForm.passwordConfirm) {
+            console.log('this.registerForm.password != this.registerForm.passwordConfirm')
+            Message({
+              message: '两次密码不一致',
+              type: 'error',
+              duration: 5 * 1000
+            })
+            return
+          }
           this.loading = true
-          let userInfo = {}
-          userInfo.username = this.loginForm.username
-          userInfo.password = SHA1(this.loginForm.password.trim()).toString()
-          this.$store.dispatch('user/login', userInfo).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
+
+          const { username, password } = this.registerForm
+          register({ username: username.trim(), password: SHA1(password.trim()).toString() }).then(response => {
             this.loading = false
-          }).catch(() => {
+            console.log('resp',response)
+            this.$router.push({ path: '/login' })
+          }).catch(error => {
             this.loading = false
+            console.log(error)
           })
+          
         } else {
           console.log('error submit!!')
           return false
         }
       })
     },
-    toRegister() {
-      console.log('toRegister called')
+    toLogin() {
+      console.log('toLogin called')
 
-      this.$router.push({ path: '/register' })
+      this.$router.push({ path: '/login' })
     }
   }
 }
